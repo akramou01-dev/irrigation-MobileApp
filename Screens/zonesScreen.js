@@ -140,7 +140,7 @@ const ZonesScreen = (props) => {
           >
             <TouchableOpacity
               style={{
-                marginTop: screenHeight * 0.07,
+                marginTop: screenHeight * 0.08,
                 width: screenWidth * 0.15,
               }}
               onPress={() => {
@@ -250,6 +250,7 @@ const ZonesScreen = (props) => {
 
                   <View style={styles.input}>
                     <TextInput
+                      keyboardType="numeric"
                       value={irrigationProgramme.length}
                       onChangeText={(e) => {
                         setIrrigationProgramme({

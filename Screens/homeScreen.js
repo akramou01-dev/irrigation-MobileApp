@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -12,46 +12,58 @@ import {
   ImageBackground,
   ScrollView,
   StatusBar,
+  Animated,
 } from "react-native";
-import PersoButton from "../Components/persoButton";
 import { AuthContext } from "../Components/context";
 import axios from "axios";
-import * as Location from "expo-location";
 import Colors from "../Constants/Colors";
 import { ZONES } from "../data/dummyData";
 import { CAPTEUR } from "../data/dummyData";
 import Card from "../Components/card";
 import { Ionicons } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
 
 const HomeScreen = (props) => {
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   const { SignOut } = useContext(AuthContext);
 
   const toZoneHandler = (id, etat) => {
     props.navigation.navigate("ZonesScreen", { id: id, etat: etat });
   };
 
-  const zonesrenderHandler = (itemData) => {
-    // let image = "rgba(92, 184, 92,0.7)";
+  const zonesrenderHandler = ({ item, index }) => {
+    let itemSize = Dimensions.get("window").width * 0.35;
+    const inputRange = [0,itemSize * index, itemSize * (index + 2.5)];
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [1,1,0]
+    })
+    const opacity = scrollX.interpolate({
+      inputRange: [0, itemSize * index, itemSize * (index + 1)],
+      outputRange:[1,1,0]
+    })
     let image = require("../assets/vert_degrade.jpg");
-
     let icon = <Ionicons name="leaf" size={50} color="white" />;
-    if (itemData.item.etat) {
-      //   image = "rgba(91, 192, 222, 0.7)";
+    if (item.etat) {
       image = require("../assets/Ocean_blue.jpg");
       icon = <Ionicons name="water" size={50} color="white" />;
     }
     return (
+      <Animated.View style={{opacity,transform:[{scale}]}}>
       <TouchableOpacity
         activeOpacity={0.6}
-        onPress={() => toZoneHandler(itemData.item.id, itemData.item.etat)}
+        onPress={() => toZoneHandler(item.id, item.etat)}
+       
       >
         <Card
           style={{
-            width: Dimensions.get("window").width * 0.35,
+            width: itemSize,
             height: Dimensions.get("window").width * 0.5,
             marginRight: 8,
             overflow: "hidden",
+            
+            
           }}
         >
           <ImageBackground
@@ -65,7 +77,7 @@ const HomeScreen = (props) => {
                 alignItems: "center",
               }}
             >
-              {itemData.item.etat && (
+              {item.etat && (
                 <View>
                   <Text
                     style={{
@@ -84,18 +96,19 @@ const HomeScreen = (props) => {
                       alignSelf: "center",
                     }}
                   >
-                    time !
+                    time
                   </Text>
                 </View>
               )}
               <View style={styles.cardView}>
                 {icon}
-                <Text style={styles.cardText}>{itemData.item.title}</Text>
+                <Text style={styles.cardText}>{item.title}</Text>
               </View>
             </View>
           </ImageBackground>
         </Card>
       </TouchableOpacity>
+      </Animated.View>
     );
   };
   const capteurRanderItem = (itemData) => {
@@ -124,23 +137,38 @@ const HomeScreen = (props) => {
       </Card>
     );
   };
+  const scaleH = scrollY.interpolate({
+    inputRange:[0, 70],
+    outputRange:[1,0]
+  })
+  
 
   return (
     <SafeAreaView style={{ paddingTop: StatusBar.currentHeight }}>
-      <ScrollView>
+      <Animated.ScrollView onScroll={Animated.event([
+                { nativeEvent: { contentOffset: { y: scrollY } } },
+              ],
+              {useNativeDriver: true}
+              )}>
         <View style={styles.header}>
-          <Image
-            style={{ width: 190, height: 90 }}
+          <Animated.Image
+          
+            style={{ width: 190, height: 90,transform:[{scale:scaleH}],opacity: scaleH  }}
             source={require("../assets/logoNav.png")}
           />
         </View>
         <View style={styles.container}>
           <View style={styles.list}>
             <Text style={styles.text}>Zones</Text>
-            <FlatList
+            <Animated.FlatList
               horizontal={true}
               data={ZONES}
               renderItem={zonesrenderHandler}
+              onScroll={Animated.event([
+                { nativeEvent: { contentOffset: { x: scrollX } } },
+              ],
+              {useNativeDriver: true}
+              )}
             />
           </View>
           <View style={styles.otherCards}>
@@ -161,7 +189,7 @@ const HomeScreen = (props) => {
                   fontFamily: "futura-meduim",
                 }}
               >
-                Capteurs 
+                Capteurs
               </Text>
             </View>
             <FlatList data={CAPTEUR} renderItem={capteurRanderItem} />
@@ -199,7 +227,7 @@ const HomeScreen = (props) => {
             </View>
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
